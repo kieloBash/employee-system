@@ -54,6 +54,7 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeList);
     }
 
+
     @PutMapping("/update/{employeeId}")
     public ResponseEntity<?> updateEmployee(Principal principal,
                                             @PathVariable(name = "employeeId") String employeeId,
@@ -93,5 +94,27 @@ public class EmployeeController {
 
         return ResponseEntity.noContent().build();
     }
+
+
+    @GetMapping("/summary/calculate-avg-salary")
+    public ResponseEntity<Double> calculateAverageSalary(Principal principal){
+        String username = principal.getName();
+        if(username == null){
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(this.employeeService.calculateAverageSalaries());
+    }
+
+    @GetMapping("/summary/calculate-avg-age")
+    public ResponseEntity<Double> calculateAverageAge(Principal principal){
+        String username = principal.getName();
+        if(username == null){
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(this.employeeService.calculateAverageAge());
+    }
+
 
 }
