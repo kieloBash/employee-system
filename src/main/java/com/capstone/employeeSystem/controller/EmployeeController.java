@@ -41,6 +41,7 @@ public class EmployeeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
     }
 
+    @CrossOrigin(origins = "http://127.0.0.1:5500")
     @GetMapping
     public ResponseEntity<List<Employee>> getEmployees(Principal principal,
                                                        @RequestParam(name = "groupBy", required = false, defaultValue = "")String groupByFilter,
