@@ -43,13 +43,14 @@ public class EmployeeController {
 
     @GetMapping
     public ResponseEntity<List<Employee>> getEmployees(Principal principal,
+                                                       @RequestParam(name = "groupBy", required = false, defaultValue = "")String groupByFilter,
                                                        @RequestParam(name = "name", required = false, defaultValue = "")String nameFilter){
         String username = principal.getName();
         if(username == null){
             return ResponseEntity.badRequest().build();
         }
 
-        List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter);
+        List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter, groupByFilter);
 
         return ResponseEntity.ok(employeeList);
     }

@@ -5,12 +5,12 @@ import com.capstone.employeeSystem.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.time.LocalDate;
 import java.time.Period;
 
 import java.time.ZoneId;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -33,20 +33,60 @@ public class EmployeeService {
         }
     }
 
-    public List<Employee> getListOfEmployees(String nameFilter){
+    public List<Employee> getListOfEmployees(String nameFilter, String groupBy){
         try{
             List<Employee> employeeList;
 
-            if(!nameFilter.isEmpty()){
-                employeeList  = this.employeeRepository.findEmployeesByFilters(nameFilter);
+            if(!groupBy.isEmpty()){
+                return getGroupedListEmployees(nameFilter, groupBy);
             }else{
-                employeeList = this.employeeRepository.findAll();
+                if(!nameFilter.isEmpty()){
+                    employeeList  = this.employeeRepository.findEmployeesByFilters(nameFilter);
+                }else{
+                    employeeList = this.employeeRepository.findAll();
+                }
+
+                return employeeList;
             }
 
-            return employeeList;
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<Employee> getGroupedListEmployees(String nameFilter, String groupBy){
+
+        List<Employee> employees = this.employeeRepository.findEmployeesByFilters(nameFilter);
+
+        // List to store the grouped employees
+        List<Employee> groupedEmployees = new ArrayList<>();
+
+        // Group by department or age
+        if (groupBy.equals("department")) {
+            // Grouping by department
+            Map<String, List<Employee>> groupedByDepartment = employees.stream()
+                    .collect(Collectors.groupingBy(Employee::getDepartment)); // Group by department
+
+            // Flatten the grouped map into a single list of employees
+            groupedByDepartment.values().forEach(groupedEmployees::addAll);
+
+        } else if (groupBy.equals("age")) {
+            // Grouping by age
+            Map<String, List<Employee>> groupedByAge = employees.stream()
+                    .collect(Collectors.groupingBy(e -> {
+                        // Calculate age dynamically based on date of birth and current year
+                        int age = calculateAge(e.getDateOfBirth());
+                        return String.valueOf(age); // Group by age as a string
+                    }));
+
+            // Flatten the grouped map into a single list of employees
+            groupedByAge.values().forEach(groupedEmployees::addAll);
+
+        } else {
+            throw new IllegalArgumentException("Invalid groupBy value. It should be either 'department' or 'age'.");
+        }
+
+        return groupedEmployees;
     }
 
     public Employee updateEmployee(Employee updateEmployee, String employeeId){
@@ -122,5 +162,14 @@ public class EmployeeService {
         return Math.floor(totalAge / employeeList.size());
     }
 
+    private int calculateAge(Date dateOfBirth) {
+        Calendar birthDate = Calendar.getInstance();
+        birthDate.setTime(dateOfBirth);
+
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int birthYear = birthDate.get(Calendar.YEAR);
+
+        return currentYear - birthYear;
+    }
 
 }
