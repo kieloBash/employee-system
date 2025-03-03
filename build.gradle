@@ -1,0 +1,56 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.capstone'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// JPA and Validation
+	implementation "org.springframework.boot:spring-boot-starter-validation" // For validation annotations
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa" // For JPA support
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	testImplementation 'org.springframework.security:spring-security-test'
+	implementation 'io.jsonwebtoken:jjwt:0.12.6'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Mockito dependencies
+	testImplementation 'org.mockito:mockito-core:4.8.0' // Mocking library
+	testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0' // Mockito with JUnit Jupiter
+
+	// If you're using @ExtendWith(MockitoExtension.class)
+	testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
