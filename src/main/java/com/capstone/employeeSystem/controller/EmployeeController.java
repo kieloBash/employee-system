@@ -42,13 +42,14 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Employee>> getEmployees(Principal principal){
+    public ResponseEntity<List<Employee>> getEmployees(Principal principal,
+                                                       @RequestParam(name = "name", required = false, defaultValue = "")String nameFilter){
         String username = principal.getName();
         if(username == null){
             return ResponseEntity.badRequest().build();
         }
 
-        List<Employee> employeeList = this.employeeService.getListOfEmployees();
+        List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter);
 
         return ResponseEntity.ok(employeeList);
     }

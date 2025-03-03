@@ -27,9 +27,15 @@ public class EmployeeService {
         }
     }
 
-    public List<Employee> getListOfEmployees(){
+    public List<Employee> getListOfEmployees(String nameFilter){
         try{
-            List<Employee> employeeList = this.employeeRepository.findAll();
+            List<Employee> employeeList;
+
+            if(!nameFilter.isEmpty()){
+                employeeList  = this.employeeRepository.findEmployeesByFilters(nameFilter);
+            }else{
+                employeeList = this.employeeRepository.findAll();
+            }
 
             return employeeList;
         } catch (RuntimeException e) {
