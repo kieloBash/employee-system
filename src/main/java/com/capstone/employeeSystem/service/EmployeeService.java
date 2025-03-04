@@ -24,9 +24,23 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
     }
 
-    public Employee createEmployee(Employee employee){
-        try{
-            if(employee == null){
+    /**
+     * Creates a new employee record in the repository.
+     *
+     * This method first checks if the provided employee object is valid (not null).
+     * If the employee object is null, an IllegalArgumentException is thrown. If the
+     * employee object is valid, it is saved to the employee repository.
+     * If any other runtime exceptions occur during the saving process, a RuntimeException
+     * with a custom message is thrown to indicate the failure.
+     *
+     * @param employee The employee object containing the details to be saved.
+     * @return The saved employee object, after being persisted in the repository.
+     * @throws IllegalArgumentException If the provided employee object is null.
+     * @throws RuntimeException If an error occurs while saving the employee to the repository.
+     */
+    public Employee createEmployee(Employee employee) {
+        try {
+            if (employee == null) {
                 throw new IllegalArgumentException("Employee data is invalid");
             }
 
@@ -34,32 +48,50 @@ public class EmployeeService {
 
         } catch (IllegalArgumentException iae) {
             throw iae;
-        } catch (RuntimeException re){
+        } catch (RuntimeException re) {
             throw new RuntimeException("Failed to create employee: " + re.getMessage(), re);
         }
     }
+
 
     private boolean isValidGroupBy(String groupBy) {
         // Example validation logic (this can be customized)
         return groupBy.equals("department") || groupBy.equals("age");
     }
 
-
-    public List<Employee> getListOfEmployees(String nameFilter, String groupBy){
-        try{
+    /**
+     * Retrieves a list of employees based on optional filters and grouping parameters.
+     *
+     * This method allows retrieving employees with a filter applied to their name and
+     * optionally grouping them by a specified attribute. If the `groupBy` parameter is
+     * provided and valid, employees will be grouped accordingly. If no grouping is required,
+     * employees can be filtered by name or returned in their entirety if no filter is provided.
+     *
+     * @param nameFilter An optional filter for employee names. If provided, only employees
+     *                   whose names match the filter will be returned.
+     * @param groupBy An optional parameter specifying the attribute by which to group the employees.
+     *                If provided, the list will be grouped according to the valid attribute.
+     * @return A list of employees that match the given filter and/or grouping criteria.
+     * @throws InvalidGroupByException If the provided `groupBy` parameter is invalid.
+     * @throws RuntimeException If an error occurs while retrieving the list of employees.
+     */
+    public List<Employee> getListOfEmployees(String nameFilter, String groupBy) {
+        try {
             List<Employee> employeeList;
 
-            if(!groupBy.isEmpty()){
+            // If grouping is specified, validate and get the grouped list.
+            if (!groupBy.isEmpty()) {
 
-                if(!isValidGroupBy(groupBy)){
+                if (!isValidGroupBy(groupBy)) {
                     throw new InvalidGroupByException("Invalid Group By Parameter");
                 }
 
                 return getGroupedListEmployees(nameFilter, groupBy);
-            }else{
-                if(!nameFilter.isEmpty()){
-                    employeeList  = this.employeeRepository.findEmployeesByFilters(nameFilter);
-                }else{
+            } else {
+                // If no grouping is specified, apply name filter if provided.
+                if (!nameFilter.isEmpty()) {
+                    employeeList = this.employeeRepository.findEmployeesByFilters(nameFilter);
+                } else {
                     employeeList = this.employeeRepository.findAll();
                 }
 
@@ -71,14 +103,31 @@ public class EmployeeService {
         }
     }
 
-    private List<Employee> getGroupedListEmployees(String nameFilter, String groupBy){
 
+    /**
+     * Retrieves a list of employees grouped by a specified attribute (either department or age).
+     *
+     * This method filters employees based on the provided `nameFilter` and then groups the
+     * filtered employees by the specified attribute (either "department" or "age").
+     * The grouping is done using Java Streams and the resulting list contains all the employees,
+     * but grouped according to the chosen attribute.
+     *
+     * @param nameFilter The filter to apply to employee names. Only employees whose names match
+     *                   this filter will be included in the result.
+     * @param groupBy The attribute by which to group the employees. It should be either "department"
+     *                or "age".
+     * @return A list of employees grouped by the specified attribute (either department or age).
+     * @throws IllegalArgumentException If the `groupBy` parameter is neither "department" nor "age".
+     */
+    private List<Employee> getGroupedListEmployees(String nameFilter, String groupBy) {
+
+        // Fetch employees based on the name filter
         List<Employee> employees = this.employeeRepository.findEmployeesByFilters(nameFilter);
 
         // List to store the grouped employees
         List<Employee> groupedEmployees = new ArrayList<>();
 
-        // Group by department or age
+        // Group by department
         if (groupBy.equals("department")) {
             // Grouping by department
             Map<String, List<Employee>> groupedByDepartment = employees.stream()
@@ -100,12 +149,27 @@ public class EmployeeService {
             groupedByAge.values().forEach(groupedEmployees::addAll);
 
         } else {
+            // Throw an exception if the groupBy value is invalid
             throw new IllegalArgumentException("Invalid groupBy value. It should be either 'department' or 'age'.");
         }
 
         return groupedEmployees;
     }
 
+    /**
+     * Updates an existing employee's details based on the provided employee ID.
+     *
+     * This method retrieves an employee from the repository by their employee ID.
+     * If the employee is found, the provided update details (such as salary, department,
+     * name, and date of birth) are applied to the employee, and the updated employee is
+     * saved back to the repository. If the employee with the given ID is not found,
+     * an `EmployeeNotFoundException` is thrown.
+     *
+     * @param updateEmployee The employee object containing the new details to update.
+     * @param employeeId The ID of the employee to be updated.
+     * @return The updated employee object after being persisted in the repository.
+     * @throws EmployeeNotFoundException If no employee is found with the provided ID.
+     */
     public Employee updateEmployee(Employee updateEmployee, String employeeId){
         Optional<Employee> foundEmployee = this.employeeRepository.findByEmployeeId(employeeId);
 
@@ -123,6 +187,18 @@ public class EmployeeService {
         return savedEmployee;
     }
 
+    /**
+     * Deletes an employee based on the provided employee ID.
+     *
+     * This method attempts to find an employee by their employee ID. If the employee is
+     * found, the employee is deleted from the repository. If no employee with the provided
+     * ID is found, an `EmployeeNotFoundException` is thrown.
+     *
+     * @param employeeId The ID of the employee to be deleted.
+     * @return A boolean value indicating the success of the deletion. Returns `true`
+     *         if the employee is successfully deleted.
+     * @throws EmployeeNotFoundException If no employee is found with the provided ID.
+     */
     public Boolean deletedEmployee(String employeeId){
         Optional<Employee> foundEmployee = this.employeeRepository.findByEmployeeId(employeeId);
 
@@ -135,6 +211,15 @@ public class EmployeeService {
         return true;
     }
 
+    /**
+     * Calculates the average salary of all employees.
+     *
+     * This method retrieves all employees from the repository and computes the average
+     * salary. If there are no employees in the repository, it returns 0 to avoid division
+     * by zero.
+     *
+     * @return The average salary of all employees. Returns 0 if the employee list is empty.
+     */
     public Double calculateAverageSalaries(){
         List<Employee> employeeList = this.employeeRepository.findAll();
 
@@ -151,6 +236,15 @@ public class EmployeeService {
         return output / employeeList.size();
     }
 
+    /**
+     * Calculates the average age of all employees.
+     *
+     * This method retrieves all employees from the repository and calculates their average
+     * age. The age is calculated based on the date of birth of each employee. If there are no
+     * employees in the repository, it returns 0 to avoid division by zero.
+     *
+     * @return The average age of all employees. Returns 0 if the employee list is empty.
+     */
     public Double calculateAverageAge() {
         List<Employee> employeeList = this.employeeRepository.findAll();
 
@@ -180,6 +274,16 @@ public class EmployeeService {
         return Math.floor(totalAge / employeeList.size());
     }
 
+    /**
+     * Calculates the age of an employee based on their date of birth.
+     *
+     * This method calculates an employee's age by comparing their date of birth to the
+     * current year. The calculation is performed by subtracting the birth year from the
+     * current year.
+     *
+     * @param dateOfBirth The employee's date of birth.
+     * @return The calculated age of the employee.
+     */
     private int calculateAge(Date dateOfBirth) {
         Calendar birthDate = Calendar.getInstance();
         birthDate.setTime(dateOfBirth);
