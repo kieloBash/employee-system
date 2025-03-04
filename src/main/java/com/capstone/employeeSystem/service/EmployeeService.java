@@ -1,5 +1,7 @@
 package com.capstone.employeeSystem.service;
 
+import com.capstone.employeeSystem.exceptions.EmployeeNotFoundException;
+import com.capstone.employeeSystem.exceptions.InvalidGroupByException;
 import com.capstone.employeeSystem.model.Employee;
 import com.capstone.employeeSystem.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
@@ -24,20 +26,35 @@ public class EmployeeService {
 
     public Employee createEmployee(Employee employee){
         try{
-            Employee savedEmployee = this.employeeRepository.save(employee);
+            if(employee == null){
+                throw new IllegalArgumentException("Employee data is invalid");
+            }
 
-            return savedEmployee;
+            return this.employeeRepository.save(employee);
 
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        } catch (IllegalArgumentException iae) {
+            throw iae;
+        } catch (RuntimeException re){
+            throw new RuntimeException("Failed to create employee: " + re.getMessage(), re);
         }
     }
+
+    private boolean isValidGroupBy(String groupBy) {
+        // Example validation logic (this can be customized)
+        return groupBy.equals("department") || groupBy.equals("age");
+    }
+
 
     public List<Employee> getListOfEmployees(String nameFilter, String groupBy){
         try{
             List<Employee> employeeList;
 
             if(!groupBy.isEmpty()){
+
+                if(!isValidGroupBy(groupBy)){
+                    throw new InvalidGroupByException("Invalid Group By Parameter");
+                }
+
                 return getGroupedListEmployees(nameFilter, groupBy);
             }else{
                 if(!nameFilter.isEmpty()){
@@ -50,7 +67,7 @@ public class EmployeeService {
             }
 
         } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("An error occurred while retrieving employees: " + e.getMessage(), e);
         }
     }
 
@@ -93,7 +110,7 @@ public class EmployeeService {
         Optional<Employee> foundEmployee = this.employeeRepository.findByEmployeeId(employeeId);
 
         if(foundEmployee.isEmpty()){
-            return null;
+            throw new EmployeeNotFoundException("Employee not found!");
         }
 
         Employee toUpdateEmployee = foundEmployee.get();
@@ -102,14 +119,15 @@ public class EmployeeService {
         toUpdateEmployee.setName(updateEmployee.getName());
         toUpdateEmployee.setDateOfBirth(updateEmployee.getDateOfBirth());
 
-        return this.employeeRepository.save(toUpdateEmployee);
+        Employee savedEmployee = this.employeeRepository.save(toUpdateEmployee);
+        return savedEmployee;
     }
 
     public Boolean deletedEmployee(String employeeId){
         Optional<Employee> foundEmployee = this.employeeRepository.findByEmployeeId(employeeId);
 
         if(foundEmployee.isEmpty()){
-            return false;
+            throw new EmployeeNotFoundException("Employee not found!");
         }
 
         Employee toDeleteEmployee = foundEmployee.get();

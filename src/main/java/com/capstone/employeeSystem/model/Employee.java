@@ -6,8 +6,8 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.Date;
+
 @Entity
 @Table(name = "employees")  // This ensures everything is stored in the "employees" table
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)  // Inheritance strategy
@@ -29,6 +29,17 @@ public class Employee extends Person {
     @Min(value = 0, message = "'salary' must be greater than or equal to 0")
     @Max(value = 1000000, message = "'salary' must be less than or equal to 1,000,000")
     private Double salary;
+
+    public Employee(){
+        super("Temp",new Date());
+    }
+
+    public Employee(String employeeId, String department, Double salary, String name, Date birthDate){
+        super(name,birthDate);
+        this.employeeId = employeeId;
+        this.department = department;
+        this.salary = salary;
+    }
 
     public String getEmployeeId() {
         return employeeId;

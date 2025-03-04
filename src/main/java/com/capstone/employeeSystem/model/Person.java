@@ -22,6 +22,11 @@ public abstract class Person {
     @Past(message = "'dateOfBirth' must be in the past")
     private Date dateOfBirth;
 
+    public Person(String name, Date birthDate) {
+        setName(name);
+        setDateOfBirth(birthDate);
+    }
+
     // getters and setters
 
     public void setId(Integer id) {

@@ -1,5 +1,7 @@
 package com.capstone.employeeSystem.controller;
 
+import com.capstone.employeeSystem.exceptions.EmployeeNotFoundException;
+import com.capstone.employeeSystem.exceptions.InvalidGroupByException;
 import com.capstone.employeeSystem.model.Employee;
 import com.capstone.employeeSystem.security.JwtFilter;
 import com.capstone.employeeSystem.service.EmployeeService;
@@ -32,16 +34,18 @@ public class EmployeeController {
             return ResponseEntity.badRequest().build();
         }
 
-        Employee createdEmployee = this.employeeService.createEmployee(employee);
-
-        if(createdEmployee == null){
-            return ResponseEntity.badRequest().build();
+        try {
+            Employee createdEmployee = employeeService.createEmployee(employee);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
     }
 
-    @CrossOrigin(origins = "http://127.0.0.1:5500")
     @GetMapping
     public ResponseEntity<List<Employee>> getEmployees(Principal principal,
                                                        @RequestParam(name = "groupBy", required = false, defaultValue = "")String groupByFilter,
@@ -51,9 +55,17 @@ public class EmployeeController {
             return ResponseEntity.badRequest().build();
         }
 
-        List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter, groupByFilter);
+        try{
+            List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter, groupByFilter);
+            return ResponseEntity.ok(employeeList);
+        }catch (EmployeeNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (InvalidGroupByException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
-        return ResponseEntity.ok(employeeList);
     }
 
 
@@ -69,15 +81,15 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Update the employee
-        Employee savedAfterUpdateEmployee = this.employeeService.updateEmployee(updatedEmployee, employeeId);
+        try{
+            // Update the employee
+            Employee savedAfterUpdateEmployee = this.employeeService.updateEmployee(updatedEmployee, employeeId);
 
-        if (savedAfterUpdateEmployee == null) {
-            // If employee is not found or couldn't be updated
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();  // 404 Not Found
+            return ResponseEntity.ok(savedAfterUpdateEmployee);  // 200 OK - Success
+        } catch (EmployeeNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        return ResponseEntity.ok(savedAfterUpdateEmployee);  // 200 OK - Success
     }
 
     @DeleteMapping("/delete/{employeeId}")
@@ -88,13 +100,14 @@ public class EmployeeController {
             return ResponseEntity.badRequest().build();
         }
 
-        Boolean hasDeleted = this.employeeService.deletedEmployee(employeeId);
+        try{
+            Boolean hasDeleted = this.employeeService.deletedEmployee(employeeId);
 
-        if(!hasDeleted){
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.noContent().build();
+
+        } catch (EmployeeNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-
-        return ResponseEntity.noContent().build();
     }
 
 
