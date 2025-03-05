@@ -1,8 +1,11 @@
 package com.capstone.employeeSystem.service;
 
+import com.capstone.employeeSystem.exceptions.DepartmentNotFoundException;
 import com.capstone.employeeSystem.exceptions.EmployeeNotFoundException;
 import com.capstone.employeeSystem.exceptions.InvalidGroupByException;
+import com.capstone.employeeSystem.model.Department;
 import com.capstone.employeeSystem.model.Employee;
+import com.capstone.employeeSystem.repository.DepartmentRepository;
 import com.capstone.employeeSystem.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +22,11 @@ import java.util.stream.Collectors;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
 
-    public EmployeeService(EmployeeRepository employeeRepository){
+    public EmployeeService(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository) {
         this.employeeRepository = employeeRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     /**
@@ -39,18 +44,23 @@ public class EmployeeService {
      * @throws RuntimeException If an error occurs while saving the employee to the repository.
      */
     public Employee createEmployee(Employee employee) {
-        try {
-            if (employee == null) {
-                throw new IllegalArgumentException("Employee data is invalid");
-            }
-
-            return this.employeeRepository.save(employee);
-
-        } catch (IllegalArgumentException iae) {
-            throw iae;
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Failed to create employee: " + re.getMessage(), re);
+        if (employee == null) {
+            throw new EmployeeNotFoundException("Employee data is invalid");
         }
+
+        if(employee.getDepartmentId() == null){
+            throw new EmployeeNotFoundException("No department Id specified");
+        }
+
+        Optional<Department> foundDepartment = this.departmentRepository.findById(employee.getDepartmentId());
+
+        if(foundDepartment.isEmpty()){
+            throw new DepartmentNotFoundException("CREATE: No department with that ID");
+        }
+
+        employee.setDepartment(foundDepartment.get());
+
+        return this.employeeRepository.save(employee);
     }
 
 
@@ -130,8 +140,8 @@ public class EmployeeService {
         // Group by department
         if (groupBy.equals("department")) {
             // Grouping by department
-            Map<String, List<Employee>> groupedByDepartment = employees.stream()
-                    .collect(Collectors.groupingBy(Employee::getDepartment)); // Group by department
+            Map<Integer, List<Employee>> groupedByDepartment = employees.stream()
+                    .collect(Collectors.groupingBy(employee -> employee.getDepartment().getId())); // Group by department
 
             // Flatten the grouped map into a single list of employees
             groupedByDepartment.values().forEach(groupedEmployees::addAll);

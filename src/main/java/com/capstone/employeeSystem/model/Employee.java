@@ -2,8 +2,10 @@ package com.capstone.employeeSystem.model;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
@@ -19,11 +21,13 @@ public class Employee extends Person {
     @Size(max = 10, message = "'department' can have a maximum of 100 characters")
     private String employeeId;
 
+    @Transient  // This makes sure it's not persisted in the database
+    private Integer departmentId;
 
-    @Column(name = "department", nullable = false)
-    @NotNull(message = "'department' is required")
-    @Size(max = 100, message = "'department' can have a maximum of 100 characters")
-    private String department;
+    @Valid
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "departmentId")
+    private Department department;
 
     @Column(name = "salary")
     @Min(value = 0, message = "'salary' must be greater than or equal to 0")
@@ -34,7 +38,7 @@ public class Employee extends Person {
         super("Temp",new Date());
     }
 
-    public Employee(String employeeId, String department, Double salary, String name, Date birthDate){
+    public Employee(String employeeId, Department department, Double salary, String name, Date birthDate){
         super(name,birthDate);
         this.employeeId = employeeId;
         this.department = department;
@@ -49,11 +53,11 @@ public class Employee extends Person {
         this.employeeId = employeeId;
     }
 
-    public String getDepartment() {
+    public Department getDepartment() {
         return department;
     }
 
-    public void setDepartment(String department) {
+    public void setDepartment(Department department) {
         this.department = department;
     }
 
@@ -63,5 +67,13 @@ public class Employee extends Person {
 
     public void setSalary(Double salary) {
         this.salary = salary;
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
     }
 }

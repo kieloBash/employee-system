@@ -1,5 +1,7 @@
 package com.capstone.employeeSystem.controller;
 
+import com.capstone.employeeSystem.dto.ResponseDTO;
+import com.capstone.employeeSystem.exceptions.DepartmentNotFoundException;
 import com.capstone.employeeSystem.exceptions.EmployeeNotFoundException;
 import com.capstone.employeeSystem.exceptions.InvalidGroupByException;
 import com.capstone.employeeSystem.model.Employee;
@@ -27,8 +29,8 @@ public class EmployeeController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Employee> createEmployee(Principal principal,
-                                                   @Valid @RequestBody Employee employee){
+    public ResponseEntity<ResponseDTO<?>> createEmployee(Principal principal,
+                                                      @Valid @RequestBody Employee employee){
         String username = principal.getName();
         if(username == null){
             return ResponseEntity.badRequest().build();
@@ -36,13 +38,19 @@ public class EmployeeController {
 
         try {
             Employee createdEmployee = employeeService.createEmployee(employee);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdEmployee);
-        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    new ResponseDTO<Employee>("Successfully created new employee",HttpStatus.CREATED,createdEmployee)
+            );
+        } catch (EmployeeNotFoundException | DepartmentNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
+                    .body(
+                            new ResponseDTO<>(e.getMessage(),HttpStatus.BAD_REQUEST,null)
+                    );
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
+                    .body(
+                            new ResponseDTO<>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR,null)
+                    );
         }
     }
 
