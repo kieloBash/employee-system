@@ -7,6 +7,7 @@ import com.capstone.employeeSystem.model.Department;
 import com.capstone.employeeSystem.model.Employee;
 import com.capstone.employeeSystem.repository.DepartmentRepository;
 import com.capstone.employeeSystem.repository.EmployeeRepository;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
 
@@ -16,6 +17,9 @@ import java.time.Period;
 
 import java.time.ZoneId;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 
 @Service
@@ -85,34 +89,34 @@ public class EmployeeService {
      * @throws InvalidGroupByException If the provided `groupBy` parameter is invalid.
      * @throws RuntimeException If an error occurs while retrieving the list of employees.
      */
-    public List<Employee> getListOfEmployees(String nameFilter, String groupBy) {
+
+
+    public Page<Employee> getListOfEmployees(String nameFilter, String groupBy, Pageable pageable) {
         try {
-            List<Employee> employeeList;
+            Page<Employee> employeePage;
 
             // If grouping is specified, validate and get the grouped list.
             if (!groupBy.isEmpty()) {
-
                 if (!isValidGroupBy(groupBy)) {
                     throw new InvalidGroupByException("Invalid Group By Parameter");
                 }
 
-                return getGroupedListEmployees(nameFilter, groupBy);
+                // Handle the grouping logic (e.g., grouped data should also support pagination)
+                employeePage = getGroupedListEmployees(nameFilter, groupBy, pageable);
             } else {
-                // If no grouping is specified, apply name filter if provided.
+                // If no grouping is specified, apply name filter if provided and return paginated result.
                 if (!nameFilter.isEmpty()) {
-                    employeeList = this.employeeRepository.findEmployeesByFilters(nameFilter);
+                    employeePage = this.employeeRepository.findEmployeesByFilters(nameFilter, pageable);
                 } else {
-                    employeeList = this.employeeRepository.findAll();
+                    employeePage = this.employeeRepository.findAll(pageable);
                 }
-
-                return employeeList;
             }
 
+            return employeePage;
         } catch (RuntimeException e) {
             throw new RuntimeException("An error occurred while retrieving employees: " + e.getMessage(), e);
         }
     }
-
 
     /**
      * Retrieves a list of employees grouped by a specified attribute (either department or age).
@@ -129,10 +133,9 @@ public class EmployeeService {
      * @return A list of employees grouped by the specified attribute (either department or age).
      * @throws IllegalArgumentException If the `groupBy` parameter is neither "department" nor "age".
      */
-    private List<Employee> getGroupedListEmployees(String nameFilter, String groupBy) {
-
-        // Fetch employees based on the name filter
-        List<Employee> employees = this.employeeRepository.findEmployeesByFilters(nameFilter);
+    private Page<Employee> getGroupedListEmployees(String nameFilter, String groupBy, Pageable pageable) {
+        // Fetch employees with pagination
+        Page<Employee> employeePage = this.employeeRepository.findEmployeesByFilters(nameFilter, pageable);
 
         // List to store the grouped employees
         List<Employee> groupedEmployees = new ArrayList<>();
@@ -140,7 +143,7 @@ public class EmployeeService {
         // Group by department
         if (groupBy.equals("department")) {
             // Grouping by department
-            Map<Integer, List<Employee>> groupedByDepartment = employees.stream()
+            Map<Integer, List<Employee>> groupedByDepartment = employeePage.getContent().stream()
                     .collect(Collectors.groupingBy(employee -> employee.getDepartment().getId())); // Group by department
 
             // Flatten the grouped map into a single list of employees
@@ -148,7 +151,7 @@ public class EmployeeService {
 
         } else if (groupBy.equals("age")) {
             // Grouping by age
-            Map<String, List<Employee>> groupedByAge = employees.stream()
+            Map<String, List<Employee>> groupedByAge = employeePage.getContent().stream()
                     .collect(Collectors.groupingBy(e -> {
                         // Calculate age dynamically based on date of birth and current year
                         int age = calculateAge(e.getDateOfBirth());
@@ -163,7 +166,12 @@ public class EmployeeService {
             throw new IllegalArgumentException("Invalid groupBy value. It should be either 'department' or 'age'.");
         }
 
-        return groupedEmployees;
+        // Convert the grouped employees back to a Page, applying pagination on the grouped result
+        int start = Math.min((int) pageable.getOffset(), groupedEmployees.size());
+        int end = Math.min((start + pageable.getPageSize()), groupedEmployees.size());
+        List<Employee> paginatedEmployees = groupedEmployees.subList(start, end);
+
+        return new PageImpl<>(paginatedEmployees, pageable, groupedEmployees.size());
     }
 
     /**

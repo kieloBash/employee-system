@@ -10,6 +10,9 @@ import com.capstone.employeeSystem.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,16 +58,20 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Employee>> getEmployees(Principal principal,
+    public ResponseEntity<Page<Employee>> getEmployees(Principal principal,
                                                        @RequestParam(name = "groupBy", required = false, defaultValue = "")String groupByFilter,
-                                                       @RequestParam(name = "name", required = false, defaultValue = "")String nameFilter){
+                                                       @RequestParam(name = "name", required = false, defaultValue = "")String nameFilter,
+                                                       @RequestParam(name = "page", required = false, defaultValue = "0")int page,
+                                                       @RequestParam(name = "size", required = false, defaultValue = "5")int size){
         String username = principal.getName();
         if(username == null){
             return ResponseEntity.badRequest().build();
         }
 
         try{
-            List<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter, groupByFilter);
+            Pageable pageable = PageRequest.of(page,size);
+
+            Page<Employee> employeeList = this.employeeService.getListOfEmployees(nameFilter, groupByFilter,pageable);
             return ResponseEntity.ok(employeeList);
         }catch (EmployeeNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
