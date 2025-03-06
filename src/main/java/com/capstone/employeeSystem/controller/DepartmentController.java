@@ -5,16 +5,22 @@ import com.capstone.employeeSystem.exceptions.DepartmentNotFoundException;
 import com.capstone.employeeSystem.model.Department;
 import com.capstone.employeeSystem.service.DepartmentService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/departments")
 public class DepartmentController {
+
+    @Autowired
+    private MessageSource messageSource;
 
     private final DepartmentService departmentService;
 
@@ -75,9 +81,12 @@ public class DepartmentController {
                     .body(new ResponseDTO<>(e.getMessage(), HttpStatus.BAD_REQUEST, null));
         } catch (DataIntegrityViolationException e) {
             // Handle the case where there are still employees in the department
+            String errorMessage = messageSource.getMessage("error.department.delete.existing",
+                    new Object[]{departmentId}, Locale.getDefault());
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ResponseDTO<>(
-                            "Department cannot be deleted because it has existing employees.",
+                            errorMessage,
                             HttpStatus.BAD_REQUEST,
                             null
                     ));
