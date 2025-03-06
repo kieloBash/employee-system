@@ -197,7 +197,15 @@ public class EmployeeService {
 
         Employee toUpdateEmployee = foundEmployee.get();
         toUpdateEmployee.setSalary(updateEmployee.getSalary());
-        toUpdateEmployee.setDepartment(updateEmployee.getDepartment());
+
+        Optional<Department> foundDepartment = departmentRepository.findByName(updateEmployee.getDepartmentName());
+
+        if(foundDepartment.isEmpty()){
+            // TODO: me
+            throw new DepartmentNotFoundException("Department not found");
+        }
+
+        toUpdateEmployee.setDepartment(foundDepartment.get());
         toUpdateEmployee.setName(updateEmployee.getName());
         toUpdateEmployee.setDateOfBirth(updateEmployee.getDateOfBirth());
 

@@ -24,6 +24,10 @@ public class Employee extends Person {
     @Transient  // This makes sure it's not persisted in the database
     private Integer departmentId;
 
+    @Transient  // This makes sure it's not persisted in the database
+    private String departmentName;
+
+
     @Valid
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departmentId")
@@ -75,5 +79,13 @@ public class Employee extends Person {
 
     public void setDepartmentId(Integer departmentId) {
         this.departmentId = departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
     }
 }
