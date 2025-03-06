@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/employees")
@@ -144,6 +145,39 @@ public class EmployeeController {
         }
 
         return ResponseEntity.ok(this.employeeService.calculateAverageAge());
+    }
+
+    @GetMapping("/group")
+    public ResponseEntity<ResponseDTO<?>> getGroupByEmployees(@RequestParam(name = "by")String groupBy){
+        try{
+            Map<String, List<Employee>> grouped = this.employeeService.groupByEmployees(groupBy);
+
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResponseDTO<>(
+                            "Successfully grouped employees",
+                            HttpStatus.OK,
+                            grouped
+                    ));
+        } catch (InvalidGroupByException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(
+                            new ResponseDTO<>(
+                                    e.getMessage(),
+                                    HttpStatus.BAD_REQUEST,
+                                    null
+                            )
+                    );
+        }
+        catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(
+                            new ResponseDTO<>(
+                                    e.getMessage(),
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                    null
+                            )
+                    );
+        }
     }
 
 

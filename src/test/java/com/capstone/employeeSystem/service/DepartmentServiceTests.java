@@ -82,5 +82,5 @@ public class DepartmentServiceTests {
         assertNotNull(result);
         verify(departmentRepository, times(1)).save(updatedDepartment);
     }
-    
+
 }

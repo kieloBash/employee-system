@@ -29,6 +29,7 @@ public class ApiConfigController {
             Map<String, String> endPoints = new HashMap<>();
 
             endPoints.put("getEmployees", externalApiConfig.getEmployeeGetUrl());
+            endPoints.put("getGroupedEmployees", externalApiConfig.getEmployeeGetGroupUrl());
             endPoints.put("createEmployee", externalApiConfig.getEmployeeCreateUrl());
             endPoints.put("updateEmployee", externalApiConfig.getEmployeeUpdateUrl());
             endPoints.put("deleteEmployee", externalApiConfig.getEmployeeDeleteUrl());

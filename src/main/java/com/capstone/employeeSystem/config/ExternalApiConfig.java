@@ -9,6 +9,9 @@ public class ExternalApiConfig {
     @Value("${external.employee.get.url}")
     private String employeeGetUrl;
 
+    @Value("${external.employee.get.group.url}")
+    private String employeeGetGroupUrl;
+
     @Value("${external.employee.create.url}")
     private String employeeCreateUrl;
 
@@ -60,5 +63,9 @@ public class ExternalApiConfig {
 
     public String getDepartmentDeleteUrl() {
         return departmentDeleteUrl;
+    }
+
+    public String getEmployeeGetGroupUrl() {
+        return employeeGetGroupUrl;
     }
 }
