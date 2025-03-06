@@ -23,8 +23,7 @@ public class Department {
 
     @NotNull(message = "'department' is required")
     @Size(max = 100, message = "'department' can have a maximum of 100 characters")
-    @Pattern(regexp = "^[a-zA-Z]+$", message = "'department' name must only contain letters (no numbers or special characters allowed)")
-    @Column(nullable = false, unique = true)
+    @Pattern(regexp = "^[a-zA-Z ]+$", message = "'department' name must only contain letters and spaces (no numbers or special characters allowed)")    @Column(nullable = false, unique = true)
     private String name;
 
 }

@@ -83,20 +83,10 @@ public class EmployeeService {
             Page<Employee> employeePage;
 
             // If grouping is specified, validate and get the grouped list.
-            if (!groupBy.isEmpty()) {
-                if (!isValidGroupBy(groupBy)) {
-                    throw new InvalidGroupByException("Invalid Group By Parameter");
-                }
-
-                // Handle the grouping logic (e.g., grouped data should also support pagination)
-                employeePage = getGroupedListEmployees(nameFilter, groupBy, pageable);
+            if (!nameFilter.isEmpty()) {
+                employeePage = this.employeeRepository.findEmployeesByFilters(nameFilter, pageable);
             } else {
-                // If no grouping is specified, apply name filter if provided and return paginated result.
-                if (!nameFilter.isEmpty()) {
-                    employeePage = this.employeeRepository.findEmployeesByFilters(nameFilter, pageable);
-                } else {
-                    employeePage = this.employeeRepository.findAll(pageable);
-                }
+                employeePage = this.employeeRepository.findAll(pageable);
             }
 
             return employeePage;

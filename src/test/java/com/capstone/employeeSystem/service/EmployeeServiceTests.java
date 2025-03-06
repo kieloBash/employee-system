@@ -1,12 +1,20 @@
 package com.capstone.employeeSystem.service;
 
+import com.capstone.employeeSystem.exceptions.DepartmentNotFoundException;
+import com.capstone.employeeSystem.exceptions.EmployeeNotFoundException;
+import com.capstone.employeeSystem.model.Department;
 import com.capstone.employeeSystem.model.Employee;
+import com.capstone.employeeSystem.repository.DepartmentRepository;
 import com.capstone.employeeSystem.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import javax.swing.text.html.Option;
 
@@ -22,6 +30,9 @@ public class EmployeeServiceTests {
     @Mock
     private EmployeeRepository employeeRepository;
 
+    @Mock
+    private DepartmentRepository departmentRepository;
+
     @InjectMocks
     private EmployeeService employeeService;
 
@@ -30,127 +41,207 @@ public class EmployeeServiceTests {
         MockitoAnnotations.initMocks(this);
     }
 
+    @Test
+    public void testGetListOfEmployees_WithNameFilter() {
+        // Arrange
+        String nameFilter = "John";
+        String groupBy = "";
+        Pageable pageable = PageRequest.of(0, 10);
+        Employee employee = new Employee();
+        Page<Employee> expectedPage = new PageImpl<>(Collections.singletonList(employee));
 
+        when(employeeRepository.findEmployeesByFilters(nameFilter, pageable)).thenReturn(expectedPage);
 
+        // Act
+        Page<Employee> result = employeeService.getListOfEmployees(nameFilter, groupBy, pageable);
 
-////    @Test
-//    public void createEmployeeTest(){
-//        Employee mockEmployee = new Employee("1",
-//                "DEVELOPER",
-//                20000d,
-//                "Kielo",
-//                new Date());
-//
-//        // Given
-//        when(employeeRepository.save(mockEmployee)).thenReturn(mockEmployee);
-//
-//        // When
-//        Employee result = this.employeeService.createEmployee(mockEmployee);
-//
-//        // Assert
-//        assertEquals("DEVELOPER",result.getDepartment(),"Department should be 'DEVELOPER'");
-//
-//        // Verify
-//        verify(employeeRepository,times(1)).save(mockEmployee);
-//
-//
-//    }
-//
-////    @Test
-//    public void updateEmployeeTest(){
-//        String employee_id = "1";
-//
-//        Employee mockEmployee = new Employee(employee_id,
-//                "DEVELOPER",
-//                20000d,
-//                "Kielo",
-//                new Date());
-//
-//        String updatedDepartment = "MID DEVELOPER";
-//        Employee updatedMockEmployee = new Employee(employee_id,
-//                updatedDepartment,
-//                20000d,"Kielo",new Date());
-//
-//
-//        // Given
-//        when(employeeRepository.findByEmployeeId(employee_id))
-//                .thenReturn(Optional.of(mockEmployee));
-//        when(employeeRepository.save(mockEmployee))
-//                .thenReturn(updatedMockEmployee);
-//
-//
-//        // When
-//        Employee result = this.employeeService.updateEmployee(updatedMockEmployee,employee_id);
-//
-//        // Assert
-//        assertEquals(updatedDepartment,result.getDepartment(), "The department should be updated to 'MID DEVELOPER'");
-//
-//        // Verify
-//        verify(employeeRepository,times(1)).findByEmployeeId(employee_id);
-//    }
-//
-////    @Test
-//    public void deleteEmployeeTest() {
-//        String employeeId = "1";
-//        Employee mockEmployee = new Employee(employeeId,
-//                "DEVELOPER",
-//                20000d,
-//                "Kielo",
-//                new Date());
-//
-//        // Given
-//        when(employeeRepository.findByEmployeeId(employeeId))
-//                .thenReturn(Optional.of(mockEmployee));
-//
-//        // Stubbing the void method with doNothing (because it doesn't return a value)
-//        doNothing().when(employeeRepository).delete(mockEmployee);
-//
-//        // When
-//        this.employeeService.deletedEmployee(employeeId);
-//
-//        // Assert
-//        verify(employeeRepository, times(1)).findByEmployeeId(employeeId);
-//        verify(employeeRepository, times(1)).delete(mockEmployee);  // Verify delete was called
-//    }
-//
-////    @Test
-//    public void searchByNameEmployeesTest(){
-//        Employee mockEmployee1 = new Employee("1",
-//                "DEVELOPER",
-//                20000d,
-//                "Kielo",
-//                new Date());
-//
-//        Employee mockEmployee2 = new Employee("2",
-//                "DEVELOPER",
-//                2000d,
-//                "Bash",
-//                new Date());
-//
-//        Employee mockEmployee3 = new Employee("3",
-//                "DEVELOPER",
-//                2000d,
-//                "Mercado",
-//                new Date());
-//
-//        ArrayList<Employee> mockedList = new ArrayList<>();
-//        mockedList.add(mockEmployee1);
-//        mockedList.add(mockEmployee2);
-//        mockedList.add(mockEmployee3);
-//
-//        // Given
-//        String searchedName = "Kielo";
-//        when(employeeService.getListOfEmployees(searchedName,""))
-//                .thenReturn(List.of(mockEmployee1));
-//        when(employeeRepository.findEmployeesByFilters(searchedName))
-//                .thenReturn(List.of(mockEmployee1));
-//
-//        // When
-//        List<Employee> result = this.employeeService
-//                .getListOfEmployees(searchedName,"");
-//
-//        // Assert
-//        assertEquals(1,result.size(),"Size should be 1");
-//    }
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(employeeRepository, times(1)).findEmployeesByFilters(nameFilter, pageable);
+    }
+
+    @Test
+    public void testGetListOfEmployees_WithoutNameFilter() {
+        // Arrange
+        String nameFilter = "";
+        String groupBy = "";
+        Pageable pageable = PageRequest.of(0, 10);
+        Employee employee = new Employee();
+        Page<Employee> expectedPage = new PageImpl<>(Collections.singletonList(employee));
+
+        when(employeeRepository.findAll(pageable)).thenReturn(expectedPage);
+
+        // Act
+        Page<Employee> result = employeeService.getListOfEmployees(nameFilter, groupBy, pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(employeeRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    public void testUpdateEmployee_EmployeeNotFound() {
+        // Arrange
+        String employeeId = "E123";
+        Employee updateEmployee = new Employee();
+
+        when(employeeRepository.findByEmployeeId(employeeId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(EmployeeNotFoundException.class, () -> {
+            employeeService.updateEmployee(updateEmployee, employeeId);
+        });
+
+        verify(employeeRepository, times(1)).findByEmployeeId(employeeId);
+        verify(departmentRepository, times(0)).findByName(anyString());
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    public void testUpdateEmployee_DepartmentNotFound() {
+        // Arrange
+        String employeeId = "E123";
+        Employee existingEmployee = new Employee();
+        existingEmployee.setEmployeeId(employeeId);
+
+        Employee updateEmployee = new Employee();
+        updateEmployee.setDepartmentName("HR");
+
+        when(employeeRepository.findByEmployeeId(employeeId)).thenReturn(Optional.of(existingEmployee));
+        when(departmentRepository.findByName("HR")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(DepartmentNotFoundException.class, () -> {
+            employeeService.updateEmployee(updateEmployee, employeeId);
+        });
+
+        verify(employeeRepository, times(1)).findByEmployeeId(employeeId);
+        verify(departmentRepository, times(1)).findByName("HR");
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    public void testUpdateEmployee_Success() {
+        // Arrange
+        String employeeId = "E123";
+        Employee existingEmployee = new Employee();
+        existingEmployee.setEmployeeId(employeeId);
+        existingEmployee.setSalary(50000.0);
+
+        Employee updateEmployee = new Employee();
+        updateEmployee.setSalary(60000.0);
+        updateEmployee.setDepartmentName("HR");
+        updateEmployee.setName("John Doe");
+        updateEmployee.setDateOfBirth(new Date());
+
+        Department department = new Department();
+        department.setName("HR");
+
+        when(employeeRepository.findByEmployeeId(employeeId)).thenReturn(Optional.of(existingEmployee));
+        when(departmentRepository.findByName("HR")).thenReturn(Optional.of(department));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(existingEmployee);
+
+        // Act
+        Employee result = employeeService.updateEmployee(updateEmployee, employeeId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(60000.0, result.getSalary());
+        assertEquals("HR", result.getDepartment().getName());
+        assertEquals("John Doe", result.getName());
+        assertEquals(updateEmployee.getDateOfBirth(), result.getDateOfBirth());
+        verify(employeeRepository, times(1)).findByEmployeeId(employeeId);
+        verify(departmentRepository, times(1)).findByName("HR");
+        verify(employeeRepository, times(1)).save(existingEmployee);
+    }
+
+    @Test
+    public void testCreateEmployee_Success() {
+        // Arrange
+        Employee employee = new Employee();
+        employee.setDepartmentId(1);
+        employee.setName("John Doe");
+        employee.setSalary(50000.0);
+        employee.setDateOfBirth(new Date());
+
+        Department department = new Department();
+        department.setId(1);
+        department.setName("HR");
+
+        when(departmentRepository.findById(1)).thenReturn(Optional.of(department));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
+
+        // Act
+        Employee result = employeeService.createEmployee(employee);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("HR", result.getDepartment().getName());
+        verify(departmentRepository, times(1)).findById(1);
+        verify(employeeRepository, times(1)).save(employee);
+    }
+
+    @Test
+    public void testCreateEmployee_EmployeeIsNull() {
+        // Act & Assert
+        assertThrows(EmployeeNotFoundException.class, () -> {
+            employeeService.createEmployee(null);
+        });
+
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+        verify(departmentRepository, times(0)).findById(anyInt());
+    }
+
+    @Test
+    public void testCreateEmployee_NoDepartmentId() {
+        // Arrange
+        Employee employee = new Employee();
+
+        // Act & Assert
+        assertThrows(EmployeeNotFoundException.class, () -> {
+            employeeService.createEmployee(employee);
+        });
+
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+        verify(departmentRepository, times(0)).findById(anyInt());
+    }
+
+    @Test
+    public void testCreateEmployee_DepartmentNotFound() {
+        // Arrange
+        Employee employee = new Employee();
+        employee.setDepartmentId(1);
+
+        when(departmentRepository.findById(1)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(DepartmentNotFoundException.class, () -> {
+            employeeService.createEmployee(employee);
+        });
+
+        verify(departmentRepository, times(1)).findById(1);
+        verify(employeeRepository, times(0)).save(any(Employee.class));
+    }
+
+    @Test
+    public void testDeletedEmployee_Success() {
+        // Arrange
+        String employeeId = "E123";
+        Employee employee = new Employee();
+        employee.setEmployeeId(employeeId);
+
+        when(employeeRepository.findByEmployeeId(employeeId)).thenReturn(Optional.of(employee));
+        doNothing().when(employeeRepository).delete(employee);
+
+        // Act
+        Boolean result = employeeService.deletedEmployee(employeeId);
+
+        // Assert
+        assertTrue(result);
+        verify(employeeRepository, times(1)).findByEmployeeId(employeeId);
+        verify(employeeRepository, times(1)).delete(employee);
+    }
 
 }
